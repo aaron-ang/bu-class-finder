@@ -2,7 +2,6 @@ import React, { useContext, createContext, useEffect } from "react";
 import {
   GoogleAuthProvider,
   signInWithPopup,
-  // signInWithRedirect,
   signOut,
   onAuthStateChanged,
   User,
@@ -25,7 +24,12 @@ export const AuthContextProvider = ({ children }: Props) => {
 
   const googleSignIn = () => {
     const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider);
+    signInWithPopup(auth, provider).then((result) => {
+      if (!result.user.email?.match(/@bu.edu$/)) {
+        auth.currentUser?.delete();
+        logOut();
+      }
+    });
   };
 
   const logOut = () => {
@@ -36,7 +40,9 @@ export const AuthContextProvider = ({ children }: Props) => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return (

@@ -19,7 +19,7 @@ const Home = () => {
     if (AuthContext?.user != null) {
       navigate("/account");
     }
-  }, [AuthContext?.user]);
+  }, [AuthContext?.user, navigate]);
 
   return (
     <div>

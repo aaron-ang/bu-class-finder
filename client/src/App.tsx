@@ -7,8 +7,6 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
-  // const queryClient = new QueryClient();
-
   return (
     <AuthContextProvider>
       <Navbar />
