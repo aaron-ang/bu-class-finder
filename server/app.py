@@ -5,22 +5,22 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from course import Course
 import telegram
-from telegram.ext import Updater, CommandHandler
 import time
 import os
 import logging
+from typing import Tuple, Set
 
-USERNAME = os.getenv("BU_USERNAME")
-PASSWORD = os.getenv("BU_PASSWORD")
+# USERNAME = os.getenv("BU_USERNAME")
+# PASSWORD = os.getenv("BU_PASSWORD")
 BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 ADMIN_CHAT_ID = os.getenv("CHAT_ID")
-LOGIN_TITLE = "Boston University | Login"
-REGISTRATION_TITLE = "Add Classes - Display"
-REGISTRATION_CFM = "Add Classes - Confirmation"
-GITHUB_URL = "https://github.com/aaron-ang/bu-class-notif"
+# LOGIN_TITLE = "Boston University | Login"
+# REGISTRATION_TITLE = "Add Classes - Display"
+# REGISTRATION_CFM = "Add Classes - Confirmation"
+GITHUB_URL = "https://github.com/aaron-ang/bu-class-finder"
 AUTH_URL = "https://shib.bu.edu/idp/profile/SAML2/Redirect/SSO?execution=e1s2"
 MAIN_REG_URL = "https://www.bu.edu/link/bin/uiscgi_studentlink.pl/1?ModuleName=regsched.pl"
-COURSES = set()
+COURSES: Set[Tuple[Course, int]] = set()
 COURSES_TO_REMOVE = []
 
 COURSES.add((Course("cas", "ec", "323", "b1"), ADMIN_CHAT_ID))
@@ -44,35 +44,31 @@ wait = WebDriverWait(driver, timeout=30)
 logger = logging.getLogger()
 
 
-def login_user():
-    username_box = driver.find_element(By.ID, "j_username")
-    password_box = driver.find_element(By.ID, "j_password")
-    login_button = driver.find_element(By.NAME, "_eventId_proceed")
+# def login_user():
+#     username_box = driver.find_element(By.ID, "j_username")
+#     password_box = driver.find_element(By.ID, "j_password")
+#     login_button = driver.find_element(By.NAME, "_eventId_proceed")
 
-    username_box.send_keys(USERNAME)
-    password_box.send_keys(PASSWORD)
-    login_button.click()
+#     username_box.send_keys(USERNAME)
+#     password_box.send_keys(PASSWORD)
+#     login_button.click()
 
-    # Wait for manual authentication to pass
-    try:
-        wait.until(lambda driver: driver.title != LOGIN_TITLE)
-    except Exception:
-        bot.send_message(
-            ADMIN_CHAT_ID, "2FA failed, bot will try again in 1 min...")
-        return False
+#     # Wait for manual authentication to pass
+#     try:
+#         wait.until(lambda driver: driver.title != LOGIN_TITLE)
+#     except Exception:
+#         bot.send_message(
+#             ADMIN_CHAT_ID, "2FA failed, bot will try again in 1 min...")
+#         return False
 
-    return True
+#     return True
 
 
 def search_courses():
     for course_info in COURSES:
-        course, chat_id = course_info
+        course, _ = course_info
         # course refers to a Course object
         driver.get(course.reg_url)
-
-        if driver.title == LOGIN_TITLE:
-            if not login_user():
-                return
 
         try:
             wait.until(EC.text_to_be_present_in_element(
@@ -82,12 +78,14 @@ def search_courses():
             break
 
 
-def search_course(course_info):
+def search_course(course_info: Tuple[Course, int]):
     try:
         course_icon = driver.find_element(
             By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[1]")
         course_name = driver.find_element(
             By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[3]/a").text
+        # /html/body/table[4]/tbody/tr[3]/td[7]/font if message exists
+        # /html/body/table[4]/tbody/tr[2]/td[7]/font if message does not exist
         course_open = course_icon.find_elements(
             By.NAME, "SelectIt") != []  # input checkbox exists
     except Exception:
@@ -106,75 +104,58 @@ def process_data(course_info, course_name, course_is_open):
     elif course_is_open:
         msg = f"{course_name} is now available at {course.reg_url}"
         # bot.send_message(chat_id, msg)
-        sync_reg_options()
-        register_course(course_name, chat_id)
+        # sync_reg_options()
+        # register_course(course_name, chat_id)
         COURSES_TO_REMOVE.append(course_info)
 
 
-def sync_reg_options():
-    driver.find_element(
-        By.XPATH, "/html/body/table[2]/tbody/tr/td[2]/a").click()
-    wait.until(EC.title_is, "Registration Options")
-    driver.execute_script("window.history.go(-1)")
+# def sync_reg_options():
+#     driver.find_element(
+#         By.XPATH, "/html/body/table[2]/tbody/tr/td[2]/a").click()
+#     wait.until(EC.title_is, "Registration Options")
+#     driver.execute_script("window.history.go(-1)")
 
 
-def register_course(course_name, chat_id):
-    input = driver.find_element(
-        By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[1]/input")
-    add_class_btn = driver.find_element(
-        By.XPATH, "/html/body/form/center[2]/table/tbody/tr/td[1]/input")
+# def register_course(course_name, chat_id):
+#     input = driver.find_element(
+#         By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[1]/input")
+#     add_class_btn = driver.find_element(
+#         By.XPATH, "/html/body/form/center[2]/table/tbody/tr/td[1]/input")
 
-    input.click()
-    add_class_btn.click()
-    alert = wait.until(EC.alert_is_present())
-    alert.accept()
+#     input.click()
+#     add_class_btn.click()
+#     alert = wait.until(EC.alert_is_present())
+#     alert.accept()
 
-    msg_success = f"{course_name} successfully registered!"
-    msg_fail = f"Could not register {course_name} :("
+#     msg_success = f"{course_name} successfully registered!"
+#     msg_fail = f"Could not register {course_name} :("
 
-    try:
-        wait.until(EC.title_is(REGISTRATION_CFM))
-        cfm_img = driver.find_element(
-            By.XPATH, "/html/body/table[4]/tbody/tr[2]/td[1]/img")
-        if "checkmark" in cfm_img.get_attribute("src"):
-            bot.send_message(chat_id, msg_success)
-        else:
-            bot.send_message(chat_id, msg_fail)
-    except Exception:
-        bot.send_message(chat_id, msg_fail)
-
-
-def quit_driver():
-    msg = "Webdriver has quit, please restart application."
-    bot.send_message(ADMIN_CHAT_ID, msg)
-    driver.quit()
+#     try:
+#         wait.until(EC.title_is(REGISTRATION_CFM))
+#         cfm_img = driver.find_element(
+#             By.XPATH, "/html/body/table[4]/tbody/tr[2]/td[1]/img")
+#         if "checkmark" in cfm_img.get_attribute("src"):
+#             bot.send_message(chat_id, msg_success)
+#         else:
+#             bot.send_message(chat_id, msg_fail)
+#     except Exception:
+#         bot.send_message(chat_id, msg_fail)
 
 
 def start(update, context):
-    msg = ("Welcome to BU Course Availability Bot! While the bot will ask for your BU credentials for 2FA,"
-           f"it does not store them or use them for other purposes. Check out the code at {GITHUB_URL}")
+    msg = (f"Welcome to BU Course Availability Bot! Check out the code at {GITHUB_URL}")
     update.message.reply_text(msg)
 
 
-def search(update, context):
-    # TODO store user credentials and input and create corresponding Course object
-    return
+# def current_courses(update, context):
+#     if len(COURSES) == 0:
+#         update.message.reply_text("No courses are being searched")
+#         return
 
-
-def add_course(update, context):
-    # TODO store user input and create Course object
-    return
-
-
-def current_courses(update, context):
-    if len(COURSES) == 0:
-        update.message.reply_text("No courses are being searched")
-        return
-
-    msg = "Bot is currently searching for:"
-    for course in COURSES:
-        msg += f"\n{course}"
-    update.message.reply_text(msg)
+#     msg = "Bot is currently searching for:"
+#     for course in COURSES:
+#         msg += f"\n{course}"
+#     update.message.reply_text(msg)
 
 
 def error(update, context):
@@ -186,8 +167,6 @@ def main():
     # updater = Updater(BOT_TOKEN, use_context=True)
     # dp = updater.dispatcher
     # dp.add_handler(CommandHandler("start", start))
-    # dp.add_handler(CommandHandler("search", search))
-    # dp.add_handler(CommandHandler("add", add_course))
     # dp.add_handler(CommandHandler("courses", current_courses))
     # dp.add_error_handler(error)
     # updater.start_polling()
@@ -197,15 +176,15 @@ def main():
     while len(COURSES) != 0:
         search_courses()
 
-        # Keep driver in this loop until 2FA succeeds
-        while driver.current_url == AUTH_URL:
-            time.sleep(60)
-            driver.get(MAIN_REG_URL)
-            try:
-                wait.until(lambda driver: driver.title != LOGIN_TITLE)
-            except Exception:
-                # 2FA failed, restart loop
-                continue
+        # # Keep driver in this loop until 2FA succeeds
+        # while driver.current_url == AUTH_URL:
+        #     time.sleep(60)
+        #     driver.get(MAIN_REG_URL)
+        #     try:
+        #         wait.until(lambda driver: driver.title != LOGIN_TITLE)
+        #     except Exception:
+        #         # 2FA failed, restart loop
+        #         continue
 
         while len(COURSES_TO_REMOVE) != 0:
             COURSES.remove(COURSES_TO_REMOVE.pop())
@@ -213,7 +192,7 @@ def main():
         time.sleep(60)
 
    # If COURSES is empty, quit webdriver and send message via Tele Bot
-    quit_driver()
+    driver.quit()
 
 
 if __name__ == "__main__":
