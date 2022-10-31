@@ -27,11 +27,9 @@ COURSES_TO_REMOVE: List[Course] = []
 
 COURSE_MAP = {
     "CAS CS 332 A1": [KB_CHAT_ID],
-    "CAS CS 350 A3": [AA_CHAT_ID],
     "CAS CS 365 A1": [AA_CHAT_ID],
     "CAS CS 365 A3": [AA_CHAT_ID],
-    "CAS CS 411 A1": [AA_CHAT_ID],
-    "CAS CS 411 A4": [AA_CHAT_ID, KB_CHAT_ID],
+    "CAS CS 411 A4": [KB_CHAT_ID],
     "CAS CS 440 A1": [KB_CHAT_ID],
     "CAS CS 440 A2": [KB_CHAT_ID],
     "CAS CS 440 A3": [KB_CHAT_ID],
@@ -203,8 +201,8 @@ def main():
         #         # 2FA failed, restart loop
         #         continue
 
-        while len(COURSES_TO_REMOVE) != 0:
-            COURSES.remove(COURSES_TO_REMOVE.pop())
+        # while len(COURSES_TO_REMOVE) != 0:
+        #     COURSES.remove(COURSES_TO_REMOVE.pop())
 
         time.sleep(60)
 
