@@ -14,8 +14,7 @@ from typing import List, Set
 # PASSWORD = os.getenv("BU_PASSWORD")
 BOT_TOKEN = str(os.getenv("TELEGRAM_TOKEN"))
 ADMIN_CHAT_IDS = str(os.getenv("CHAT_ID")).split(",")
-AA_CHAT_ID = ADMIN_CHAT_IDS[0]
-KB_CHAT_ID = ADMIN_CHAT_IDS[1]
+AA_CHAT_ID, KB_CHAT_ID = ADMIN_CHAT_IDS[0], ADMIN_CHAT_IDS[1]
 # LOGIN_TITLE = "Boston University | Login"
 # REGISTRATION_TITLE = "Add Classes - Display"
 # REGISTRATION_CFM = "Add Classes - Confirmation"
