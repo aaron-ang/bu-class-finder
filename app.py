@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from course import Course
@@ -9,13 +10,15 @@ import time
 import os
 import logging
 from typing import List, Set
+from dotenv import load_dotenv
 
+load_dotenv()
 # USERNAME = os.getenv("BU_USERNAME")
 # PASSWORD = os.getenv("BU_PASSWORD")
 BOT_TOKEN = str(os.getenv("TELEGRAM_TOKEN"))
-ADMIN_CHAT_IDS = str(os.getenv("CHAT_ID")).split(",")
-AA_CHAT_ID = ADMIN_CHAT_IDS[0]
-KB_CHAT_ID = ADMIN_CHAT_IDS[1]
+CHAT_IDS = str(os.getenv("CHAT_ID")).split(",")
+AA_CHAT_ID = CHAT_IDS[0]
+KB_CHAT_ID = CHAT_IDS[1]
 # LOGIN_TITLE = "Boston University | Login"
 # REGISTRATION_TITLE = "Add Classes - Display"
 # REGISTRATION_CFM = "Add Classes - Confirmation"
@@ -32,31 +35,30 @@ COURSE_MAP = {
     "CAS CS 365 A3": [AA_CHAT_ID],
     "CAS CS 411 A1": [AA_CHAT_ID],
     "CAS CS 411 A4": [AA_CHAT_ID, KB_CHAT_ID],
-    "CAS CS 411 B2": [AA_CHAT_ID],
     "CAS CS 440 A1": [KB_CHAT_ID],
     "CAS CS 440 A2": [KB_CHAT_ID],
     "CAS CS 440 A3": [KB_CHAT_ID],
     "CAS CS 460 A1": [AA_CHAT_ID],
+    "CAS CS 460 A2": [AA_CHAT_ID],
     "CAS EC 337 A1": [AA_CHAT_ID]
 }
 
 for c in COURSE_MAP:
     COURSES.add(Course(c))
 
-options = webdriver.ChromeOptions()
-options.binary_location = os.getenv("GOOGLE_CHROME_BIN")  # type: ignore
-options.add_argument('--no-sandbox')
-options.headless = True
-options.add_argument('--disable-gpu')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument('--disable-browser-side-navigation')
-options.add_argument('--start-maximized')
-options.add_argument('--disable-infobars')
+# options = webdriver.ChromeOptions()
+# options.binary_location = os.getenv("GOOGLE_CHROME_BIN")  # type: ignore
+# options.add_argument('--no-sandbox')
+# options.headless = True
+# options.add_argument('--disable-gpu')
+# options.add_argument('--disable-dev-shm-usage')
+# options.add_argument('--disable-browser-side-navigation')
+# options.add_argument('--start-maximized')
+# options.add_argument('--disable-infobars')
 # options.add_experimental_option('excludeSwitches', ['enable-automation'])
 
-service = Service(executable_path=os.getenv(
-    "CHROMEDRIVER_PATH"))  # type: ignore
-driver = webdriver.Chrome(service=service, options=options)
+driver = webdriver.Chrome(service=ChromeService(
+    executable_path=ChromeDriverManager().install()))
 bot = telegram.Bot(token=BOT_TOKEN)
 wait = WebDriverWait(driver, timeout=30)
 logger = logging.getLogger()
@@ -84,12 +86,11 @@ logger = logging.getLogger()
 
 def search_courses():
     for course in COURSES:
-        # course refers to a Course object
         driver.get(course.reg_url)
 
         try:
-            wait.until(EC.text_to_be_present_in_element(
-                (By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[3]/a"), str(course)))
+            wait.until(EC.visibility_of_element_located(
+                (By.XPATH, "/html/body/table[4]/tbody/tr[2]/td[2]")))
             search_course(course)
         except:
             break
@@ -97,14 +98,14 @@ def search_courses():
 
 def search_course(course: Course):
     try:
-        course_icon = driver.find_element(
-            By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[1]")
         course_name = driver.find_element(
-            By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[3]/a").text
-        # /html/body/table[4]/tbody/tr[3]/td[7]/font if message exists
-        # /html/body/table[4]/tbody/tr[2]/td[7]/font if message does not exist
-        course_open = course_icon.find_elements(
-            By.NAME, "SelectIt") != []  # input checkbox exists
+            By.XPATH, "/html/body/table[4]/tbody/tr[2]/td[2]/font/a").text
+        # course_icon = driver.find_element(
+        #     By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[1]")
+        # course_open = course_icon.find_elements(
+        #     By.NAME, "SelectIt") != []  # input checkbox exists
+        course_open = int(driver.find_element(
+            By.XPATH, "/html/body/table[4]/tbody/tr[2]/td[7]/font").text) > 0
     except Exception:
         return
 
@@ -112,15 +113,15 @@ def search_course(course: Course):
 
 
 def process_data(course: Course, course_name: str, course_is_open: bool):
-    if course_name != course.__str__():
-        msg = f"{course} does not exist or is not specific. Did you mean {course_name}?"
-        for uid in COURSE_MAP[course.__str__()]:
-            bot.send_message(uid, msg)
-        COURSES_TO_REMOVE.append(course)
+    # if "".join(course_name.split()) != "".join(str(course).split()):
+    #     msg = f"{course} does not exist or is not specific. Did you mean {course_name}?"
+    #     for uid in COURSE_MAP[str(course)]:
+    #         bot.send_message(uid, msg)
+    #     COURSES_TO_REMOVE.append(course)
 
-    elif course_is_open:
-        msg = f"{course.__str__()} is now available at {course.reg_url}"
-        for uid in COURSE_MAP[course.__str__()]:
+    if course_is_open:
+        msg = f"{str(course)} is now available at {course.reg_url}"
+        for uid in COURSE_MAP[str(course)]:
             bot.send_message(uid, msg)
         # sync_reg_options()
         # register_course(course_name, chat_id)
