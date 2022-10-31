@@ -1,8 +1,10 @@
 from datetime import datetime
+from typing import Iterable
 
 
 class Course:
-    def __init__(self, college, department, number, section):
+    def __init__(self, full_course: str):
+        college, department, number, section = full_course.split()
         now = datetime.now()
         self.year = now.year
         self.semester = "Fall" if 4 <= now.month < 10 else "Spring"
@@ -16,4 +18,4 @@ class Course:
                         f"&College={self.college}&Dept={self.department}&Course={self.number}&Section={self.section}")
 
     def __str__(self):
-        return f"{self.college} {self.department}{self.number} {self.section}"
+        return f"{self.college} {self.department} {self.number} {self.section}"

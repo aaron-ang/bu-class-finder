@@ -1,33 +1,50 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from course import Course
 import telegram
 import time
 import os
 import logging
-from typing import Tuple, Set
+from typing import List, Set
 
 # USERNAME = os.getenv("BU_USERNAME")
 # PASSWORD = os.getenv("BU_PASSWORD")
-BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
-ADMIN_CHAT_ID = os.getenv("CHAT_ID")
+BOT_TOKEN = str(os.getenv("TELEGRAM_TOKEN"))
+ADMIN_CHAT_IDS = str(os.getenv("CHAT_ID")).split(",")
+AA_CHAT_ID = ADMIN_CHAT_IDS[0]
+KB_CHAT_ID = ADMIN_CHAT_IDS[1]
 # LOGIN_TITLE = "Boston University | Login"
 # REGISTRATION_TITLE = "Add Classes - Display"
 # REGISTRATION_CFM = "Add Classes - Confirmation"
 GITHUB_URL = "https://github.com/aaron-ang/bu-class-finder"
 AUTH_URL = "https://shib.bu.edu/idp/profile/SAML2/Redirect/SSO?execution=e1s2"
 MAIN_REG_URL = "https://www.bu.edu/link/bin/uiscgi_studentlink.pl/1?ModuleName=regsched.pl"
-COURSES: Set[Tuple[Course, int]] = set()
-COURSES_TO_REMOVE = []
+COURSES: Set[Course] = set()
+COURSES_TO_REMOVE: List[Course] = []
 
-COURSES.add((Course("cas", "ec", "323", "b1"), ADMIN_CHAT_ID))
-COURSES.add((Course("cas", "ph", "266", "a1"), ADMIN_CHAT_ID))
+COURSE_MAP = {
+    "CAS CS 332 A1": [KB_CHAT_ID],
+    "CAS CS 350 A3": [AA_CHAT_ID],
+    "CAS CS 365 A1": [AA_CHAT_ID],
+    "CAS CS 365 A3": [AA_CHAT_ID],
+    "CAS CS 411 A1": [AA_CHAT_ID],
+    "CAS CS 411 A4": [AA_CHAT_ID, KB_CHAT_ID],
+    "CAS CS 411 B2": [AA_CHAT_ID],
+    "CAS CS 440 A1": [KB_CHAT_ID],
+    "CAS CS 440 A2": [KB_CHAT_ID],
+    "CAS CS 440 A3": [KB_CHAT_ID],
+    "CAS CS 460 A1": [AA_CHAT_ID],
+    "CAS EC 337 A1": [AA_CHAT_ID]
+}
+
+for c in COURSE_MAP:
+    COURSES.add(Course(c))
 
 options = webdriver.ChromeOptions()
-options.binary_location = os.getenv("GOOGLE_CHROME_BIN")
+options.binary_location = os.getenv("GOOGLE_CHROME_BIN")  # type: ignore
 options.add_argument('--no-sandbox')
 options.headless = True
 options.add_argument('--disable-gpu')
@@ -37,7 +54,8 @@ options.add_argument('--start-maximized')
 options.add_argument('--disable-infobars')
 # options.add_experimental_option('excludeSwitches', ['enable-automation'])
 
-service = Service(executable_path=os.getenv("CHROMEDRIVER_PATH"))
+service = Service(executable_path=os.getenv(
+    "CHROMEDRIVER_PATH"))  # type: ignore
 driver = webdriver.Chrome(service=service, options=options)
 bot = telegram.Bot(token=BOT_TOKEN)
 wait = WebDriverWait(driver, timeout=30)
@@ -65,20 +83,19 @@ logger = logging.getLogger()
 
 
 def search_courses():
-    for course_info in COURSES:
-        course, _ = course_info
+    for course in COURSES:
         # course refers to a Course object
         driver.get(course.reg_url)
 
         try:
             wait.until(EC.text_to_be_present_in_element(
                 (By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[3]/a"), str(course)))
-            search_course(course_info)
+            search_course(course)
         except:
             break
 
 
-def search_course(course_info: Tuple[Course, int]):
+def search_course(course: Course):
     try:
         course_icon = driver.find_element(
             By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[1]")
@@ -91,22 +108,23 @@ def search_course(course_info: Tuple[Course, int]):
     except Exception:
         return
 
-    process_data(course_info, course_name, course_open)
+    process_data(course, course_name, course_open)
 
 
-def process_data(course_info, course_name, course_is_open):
-    course, chat_id = course_info
+def process_data(course: Course, course_name: str, course_is_open: bool):
     if course_name != course.__str__():
         msg = f"{course} does not exist or is not specific. Did you mean {course_name}?"
-        bot.send_message(chat_id, msg)
-        COURSES_TO_REMOVE.append(course_info)
+        for uid in COURSE_MAP[course.__str__()]:
+            bot.send_message(uid, msg)
+        COURSES_TO_REMOVE.append(course)
 
     elif course_is_open:
-        msg = f"{course_name} is now available at {course.reg_url}"
-        # bot.send_message(chat_id, msg)
+        msg = f"{course.__str__()} is now available at {course.reg_url}"
+        for uid in COURSE_MAP[course.__str__()]:
+            bot.send_message(uid, msg)
         # sync_reg_options()
         # register_course(course_name, chat_id)
-        COURSES_TO_REMOVE.append(course_info)
+        COURSES_TO_REMOVE.append(course)
 
 
 # def sync_reg_options():
@@ -143,7 +161,8 @@ def process_data(course_info, course_name, course_is_open):
 
 
 def start(update, context):
-    msg = (f"Welcome to BU Course Availability Bot! Check out the code at {GITHUB_URL}")
+    msg = (
+        f"Welcome to BU Course Availability Bot! Check out the code at {GITHUB_URL}")
     update.message.reply_text(msg)
 
 
