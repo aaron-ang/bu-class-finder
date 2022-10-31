@@ -3,7 +3,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from course import Course
 import telegram
 import time
@@ -55,7 +54,6 @@ options.add_argument('--start-maximized')
 options.add_argument('--disable-infobars')
 # options.add_experimental_option('excludeSwitches', ['enable-automation'])
 
-service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(executable_path=os.getenv(
     "CHROMEDRIVER_PATH"), chrome_options=options)  # type: ignore
 bot = telegram.Bot(token=BOT_TOKEN)
