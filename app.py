@@ -55,7 +55,7 @@ options.add_argument('--disable-infobars')
 # options.add_experimental_option('excludeSwitches', ['enable-automation'])
 
 driver = webdriver.Chrome(executable_path=os.getenv(
-    "CHROMEDRIVER_PATH"), chrome_options=options)  # type: ignore
+    "CHROMEDRIVER_PATH"), options=options)  # type: ignore
 bot = telegram.Bot(token=BOT_TOKEN)
 wait = WebDriverWait(driver, timeout=30)
 logger = logging.getLogger()
