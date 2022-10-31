@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 from course import Course
 import telegram
 import time
@@ -45,18 +46,17 @@ for c in COURSE_MAP:
 
 options = webdriver.ChromeOptions()
 options.binary_location = os.getenv("GOOGLE_CHROME_BIN")  # type: ignore
-options.add_argument('--no-sandbox')
 options.headless = True
-options.add_argument('--disable-gpu')
 options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-gpu')
 options.add_argument('--disable-browser-side-navigation')
 options.add_argument('--start-maximized')
 options.add_argument('--disable-infobars')
 # options.add_experimental_option('excludeSwitches', ['enable-automation'])
 
-service = Service(executable_path=os.getenv(
-    "CHROMEDRIVER_PATH"))  # type: ignore
-driver = webdriver.Chrome(service=service, options=options)
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, chrome_options=options)
 bot = telegram.Bot(token=BOT_TOKEN)
 wait = WebDriverWait(driver, timeout=30)
 logger = logging.getLogger()
