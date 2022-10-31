@@ -33,9 +33,6 @@ COURSE_MAP = {
     "CAS CS 440 A1": [KB_CHAT_ID],
     "CAS CS 440 A2": [KB_CHAT_ID],
     "CAS CS 440 A3": [KB_CHAT_ID],
-    "CAS CS 460 A1": [AA_CHAT_ID],
-    "CAS CS 460 A2": [AA_CHAT_ID],
-    "CAS EC 337 A1": [AA_CHAT_ID]
 }
 
 for c in COURSE_MAP:
