@@ -26,13 +26,7 @@ COURSES: Set[Course] = set()
 COURSES_TO_REMOVE: List[Course] = []
 
 COURSE_MAP = {
-    "CAS CS 332 A1": [KB_CHAT_ID],
-    "CAS CS 365 A1": [AA_CHAT_ID],
-    "CAS CS 365 A3": [AA_CHAT_ID],
     "CAS CS 411 A4": [KB_CHAT_ID],
-    "CAS CS 440 A1": [KB_CHAT_ID],
-    "CAS CS 440 A2": [KB_CHAT_ID],
-    "CAS CS 440 A3": [KB_CHAT_ID],
 }
 
 for c in COURSE_MAP:
