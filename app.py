@@ -16,6 +16,7 @@ BOT_TOKEN = str(os.getenv("TELEGRAM_TOKEN"))
 CHAT_IDS = str(os.getenv("CHAT_ID")).split(",")
 AA_CHAT_ID = CHAT_IDS[0]
 KB_CHAT_ID = CHAT_IDS[1]
+JP_CHAT_ID = CHAT_IDS[2]
 # LOGIN_TITLE = "Boston University | Login"
 # REGISTRATION_TITLE = "Add Classes - Display"
 # REGISTRATION_CFM = "Add Classes - Confirmation"
@@ -27,6 +28,13 @@ COURSES_TO_REMOVE: List[Course] = []
 
 COURSE_MAP = {
     "CAS CS 411 A4": [KB_CHAT_ID],
+    "CAS JS 100 A1": [JP_CHAT_ID],
+    "CAS HI 299 A1": [JP_CHAT_ID],
+    "CAS EC 323 A1": [JP_CHAT_ID],
+    "CAS EC 363 B1": [JP_CHAT_ID],
+    "CAS WR 415 L1": [JP_CHAT_ID],
+    "CAS WR 415 M1": [JP_CHAT_ID],
+    "CAS WR 415 N1": [JP_CHAT_ID],
 }
 
 for c in COURSE_MAP:
