@@ -17,6 +17,7 @@ CHAT_IDS = str(os.getenv("CHAT_ID")).split(",")
 AA_CHAT_ID = CHAT_IDS[0]
 KB_CHAT_ID = CHAT_IDS[1]
 JP_CHAT_ID = CHAT_IDS[2]
+AF_CHAT_ID = CHAT_IDS[3]
 # LOGIN_TITLE = "Boston University | Login"
 # REGISTRATION_TITLE = "Add Classes - Display"
 # REGISTRATION_CFM = "Add Classes - Confirmation"
@@ -27,6 +28,7 @@ COURSES: Set[Course] = set()
 COURSES_TO_REMOVE: List[Course] = []
 
 COURSE_MAP = {
+    "CAS CS 411 A1": [AF_CHAT_ID],
     "CAS CS 411 A4": [KB_CHAT_ID],
     "CAS JS 100 A1": [JP_CHAT_ID],
     "CAS HI 299 A1": [JP_CHAT_ID],
