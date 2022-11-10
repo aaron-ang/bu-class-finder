@@ -30,9 +30,6 @@ COURSES_TO_REMOVE: List[Course] = []
 COURSE_MAP = {
     "CAS CS 411 A1": [AF_CHAT_ID],
     "CAS CS 411 A4": [KB_CHAT_ID],
-    "CAS JS 100 A1": [JP_CHAT_ID],
-    "CAS HI 299 A1": [JP_CHAT_ID],
-    "CAS EC 323 A1": [JP_CHAT_ID],
     "CAS EC 363 B1": [JP_CHAT_ID],
     "CAS WR 415 L1": [JP_CHAT_ID],
     "CAS WR 415 M1": [JP_CHAT_ID],
