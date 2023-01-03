@@ -7,10 +7,9 @@ Deployed to Heroku.
 ---
 ## Technical Details
 Database is a MongoDB Atlas cluster.
+
 Each document in the collection has the following schema:
 
-{
-    _id: ObjectId
-    name: String
-    users: String[]
-}
+* _id: ObjectId
+* name: String
+* users: String[]
