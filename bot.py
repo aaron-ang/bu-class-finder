@@ -1,22 +1,17 @@
 import os
-import logging
 from datetime import datetime
-from pymongo import MongoClient
 from telegram import Update
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes
+
+from client import mongo_client
 
 BOT_TOKEN = str(os.getenv("TELEGRAM_TOKEN"))
 ADMIN_ID = str(os.getenv("CHAT_ID"))
 MONGO_URL = str(os.getenv("MONGO_URL"))
 GITHUB_URL = "https://github.com/aaron-ang/bu-class-finder"
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-# logger = logging.getLogger(__name__)
-client = MongoClient(MONGO_URL)
-db = client.course_db
+db = mongo_client["course_db"]
+course_collection = db["courses"]
 
 
 def get_chat_id(update: Update):

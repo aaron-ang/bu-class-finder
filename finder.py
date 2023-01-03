@@ -3,14 +3,13 @@ import time
 import asyncio
 from typing import Dict, List
 import telegram
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from course import Course
+from client import mongo_client
 
 BOT_TOKEN = str(os.getenv("TELEGRAM_TOKEN"))
 ADMIN_ID = str(os.getenv("CHAT_ID"))
@@ -28,16 +27,20 @@ driver = webdriver.Chrome(executable_path=str(
 wait = WebDriverWait(driver, timeout=30)
 
 bot = telegram.Bot(token=BOT_TOKEN)
-client = MongoClient(MONGO_URL, server_api=ServerApi('1'))
-db = client.course_db
-courses = db.courses
+db = mongo_client["course_db"]
+course_collection = db["courses"]
 
 COURSE_MAP: Dict[Course, List[str]] = {}
 COURSES_TO_REMOVE: List[Course] = []
 RESULT_XPATH = ""
 
-for course in courses.find():
-    COURSE_MAP[Course(course["name"])] = list(course["users"])
+for course in course_collection.find():
+    users = list(course["users"])
+    # prune courses with no users
+    if len(users) == 0:
+        COURSES_TO_REMOVE.append(Course(course["name"]))
+    else:
+        COURSE_MAP[Course(course["name"])] = users
 
 
 async def search_courses():
@@ -58,7 +61,7 @@ async def search_course(course: Course):
         RESULT_XPATH = "/html/body/table[4]/tbody/tr[3]"
     else:
         RESULT_XPATH = "/html/body/table[4]/tbody/tr[2]"
-        
+
     try:
         keywords = ["Class Full", "Class Closed"]
         num_seats = driver.find_element(
@@ -84,7 +87,7 @@ async def main():
 
         for course in COURSES_TO_REMOVE:
             COURSE_MAP.pop(course)
-            courses.delete_one({"name": str(course)})
+            course_collection.delete_one({"name": str(course)})
         COURSES_TO_REMOVE.clear()
 
         time.sleep(60)
